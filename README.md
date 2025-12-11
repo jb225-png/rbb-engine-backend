@@ -5,48 +5,61 @@ AI-powered curriculum generation backend built with FastAPI.
 ## Project Structure
 
 ```
-backend/
+rbb-engine-backend/
 ├── app/
-│   ├── api/
-│   │   └── v1/
-│   │       └── routes/
-│   │           └── health.py          # Health check endpoint
+│   ├── api/v1/routes/
+│   │   ├── health.py              # Health check endpoint
+│   │   ├── standards.py           # Standards management
+│   │   ├── products.py            # Product management
+│   │   ├── generation_jobs.py     # Job tracking
+│   │   ├── upload_tasks.py        # VA team tasks
+│   │   └── dashboard.py           # Dashboard endpoints
 │   ├── core/
-│   │   ├── config.py                  # Config exports
-│   │   └── settings.py                # Environment settings
+│   │   ├── config.py              # Config exports
+│   │   ├── settings.py            # Environment settings
+│   │   └── responses.py           # Response helpers
 │   ├── db/
-│   │   ├── base.py                    # Model imports for Alembic
-│   │   └── session.py                 # Database session management
+│   │   ├── base.py                # Model imports for Alembic
+│   │   └── session.py             # Database session management
 │   ├── models/
-│   │   ├── product.py                 # Product model
-│   │   ├── job.py                     # Job model
+│   │   ├── standard.py            # Standard model
+│   │   ├── product.py             # Product model
+│   │   ├── generation_job.py      # Generation job model
+│   │   ├── upload_task.py         # Upload task model
+│   │   ├── file_artifact.py       # File artifact model
+│   │   ├── job.py                 # Legacy job model
 │   │   └── __init__.py
 │   ├── schemas/
-│   │   ├── product.py                 # Product Pydantic schemas
-│   │   ├── job.py                     # Job Pydantic schemas
+│   │   ├── standard.py            # Standard Pydantic schemas
+│   │   ├── product.py             # Product Pydantic schemas
+│   │   ├── generation_job.py      # Generation job schemas
+│   │   ├── upload_task.py         # Upload task schemas
+│   │   ├── file_artifact.py       # File artifact schemas
+│   │   ├── job.py                 # Legacy job schemas
 │   │   └── __init__.py
 │   ├── services/
-│   │   └── __init__.py                # Business logic (Day 2+)
+│   │   └── __init__.py            # Business logic (Day 3+)
 │   ├── utils/
-│   │   ├── logger.py                  # Logging configuration
-│   │   └── storage.py                 # File storage utilities
-│   └── main.py                        # FastAPI app factory
-├── migrations/                         # Alembic migrations
+│   │   ├── logger.py              # Logging configuration
+│   │   └── storage.py             # File storage utilities
+│   └── main.py                    # FastAPI app factory
+├── docs/
+│   ├── entities.md                # Database entities documentation
+│   └── endpoints_mvp.md           # MVP API endpoints documentation
+├── migrations/                     # Alembic migrations
 │   ├── env.py
 │   └── script.py.mako
-├── alembic.ini                        # Alembic configuration
-├── requirements.txt                   # Python dependencies
-├── .env.example                       # Environment template
+├── alembic.ini                    # Alembic configuration
+├── requirements.txt               # Python dependencies
+├── .env.example                   # Environment template
 └── README.md
 ```
 
 ## Setup Instructions
 
-### 1. Create Virtual Environment
+### 1. Activate Virtual Environment
 
 ```bash
-cd backend
-python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -74,7 +87,9 @@ createdb rbb_engine
 ### 5. Run Migrations
 
 ```bash
-alembic revision --autogenerate -m "Initial migration"
+# Generate migration (after activating venv)
+alembic revision --autogenerate -m "Add core entities"
+# Apply migration
 alembic upgrade head
 ```
 
@@ -90,21 +105,51 @@ API documentation: http://localhost:8000/docs
 
 ## Available Endpoints
 
+### Core Endpoints
 - `GET /api/health` - Health check endpoint
+- `GET /api/v1/standards` - List standards
+- `GET /api/v1/products` - List products
+- `POST /api/v1/generation-jobs` - Create generation job
+- `GET /api/v1/upload-tasks` - List upload tasks
+- `GET /api/v1/dashboard/stats` - Dashboard statistics
+
+See `docs/endpoints_mvp.md` for complete endpoint documentation.
+
+## Documentation
+
+- **Entity Documentation**: `docs/entities.md` - Database entities and their purpose
+- **API Documentation**: `docs/endpoints_mvp.md` - MVP endpoint specifications
+- **Interactive API Docs**: http://localhost:8000/docs (when server is running)
+
+## Database Models
+
+Core entities implemented:
+- **Standards** - Educational standards for content generation
+- **Products** - Generated content items (worksheets, passages, quizzes)
+- **Generation Jobs** - Content generation tasks
+- **Upload Tasks** - VA team workflow tasks
+- **File Artifacts** - Generated files and metadata
 
 ## Tech Stack
 
 - **FastAPI** - Modern web framework
-- **SQLAlchemy** - ORM
+- **SQLAlchemy** - ORM with declarative models
 - **Alembic** - Database migrations
 - **PostgreSQL** - Database
-- **Pydantic** - Data validation
+- **Pydantic v2** - Data validation and serialization
 - **Uvicorn** - ASGI server
 
-## Next Steps (Day 2+)
+## Development Workflow
 
-- Implement business logic in services/
-- Add CRUD operations for products and jobs
-- Integrate with n8n workflows
-- Add authentication and authorization
-- Implement AI agent pipeline integration
+1. **Day 1**: Foundation setup ✅
+2. **Day 2**: Core entities and API scaffolding ✅
+3. **Day 3+**: Business logic implementation
+4. **Future**: AI integration, n8n workflows, authentication
+
+## Project Structure Notes
+
+- **Modular Design**: Clear separation between API, models, schemas, services
+- **Type Safety**: Full type hints with Pydantic v2
+- **Database**: SQLAlchemy models with proper indexing
+- **API Versioning**: v1 namespace for future compatibility
+- **Documentation**: Comprehensive docs for team alignment

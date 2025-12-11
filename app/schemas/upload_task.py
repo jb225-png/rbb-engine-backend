@@ -1,17 +1,19 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class ProductBase(BaseModel):
-    standard_id: int
-    type: str
+class UploadTaskBase(BaseModel):
+    product_id: int
     status: str | None = None
 
-class ProductCreate(ProductBase):
+class UploadTaskCreate(UploadTaskBase):
     pass
 
-class ProductRead(ProductBase):
+class UploadTaskRead(UploadTaskBase):
     id: int
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+class UploadTaskUpdate(BaseModel):
+    status: str

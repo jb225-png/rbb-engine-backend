@@ -1,15 +1,15 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class ProductBase(BaseModel):
+class GenerationJobBase(BaseModel):
     standard_id: int
-    type: str
+    job_type: str
     status: str | None = None
 
-class ProductCreate(ProductBase):
+class GenerationJobCreate(GenerationJobBase):
     pass
 
-class ProductRead(ProductBase):
+class GenerationJobRead(GenerationJobBase):
     id: int
     created_at: datetime
 
