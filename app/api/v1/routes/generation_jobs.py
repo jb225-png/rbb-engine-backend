@@ -1,41 +1,42 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.session import get_db
+from app.models.generation_job import GenerationJob
 from app.schemas.generation_job import GenerationJobRead, GenerationJobCreate
+from app.core.enums import JobStatus, JobType
 
 router = APIRouter()
 
 @router.post("/", response_model=GenerationJobRead)
 async def create_generation_job(job: GenerationJobCreate, db: Session = Depends(get_db)):
     """Create new generation job"""
-    # TODO: implement DB creation and trigger job processing
-    return GenerationJobRead(
-        id=1,
-        standard_id=job.standard_id,
-        job_type=job.job_type,
-        status="pending",
-        created_at="2024-01-01T00:00:00Z"
-    )
+    job_data = job.model_dump()
+    job_data['status'] = JobStatus.PENDING
+    db_job = GenerationJob(**job_data)
+    db.add(db_job)
+    db.commit()
+    db.refresh(db_job)
+    return db_job
 
 @router.get("/", response_model=List[GenerationJobRead])
 async def list_generation_jobs(
-    status: Optional[str] = Query(None),
-    job_type: Optional[str] = Query(None),
+    status: Optional[JobStatus] = Query(None),
+    job_type: Optional[JobType] = Query(None),
     db: Session = Depends(get_db)
 ):
     """List all generation jobs with optional filtering"""
-    # TODO: implement DB query with filters
-    return []
+    query = db.query(GenerationJob)
+    if status:
+        query = query.filter(GenerationJob.status == status)
+    if job_type:
+        query = query.filter(GenerationJob.job_type == job_type)
+    return query.all()
 
 @router.get("/{job_id}", response_model=GenerationJobRead)
 async def get_generation_job(job_id: int, db: Session = Depends(get_db)):
     """Get specific job details and progress"""
-    # TODO: implement DB query and 404 handling
-    return GenerationJobRead(
-        id=job_id,
-        standard_id=1,
-        job_type="single_product",
-        status="pending",
-        created_at="2024-01-01T00:00:00Z"
-    )
+    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Generation job not found")
+    return job

@@ -1,30 +1,67 @@
 # RBB Engine - Database Entities
 
+## Multi-Locale Design (India-First)
+
+The RBB Engine is designed with **India as the default locale**, supporting CBSE curriculum primarily, with extensibility for other regions like the US (Common Core).
+
+### Locale System
+- **Default Locale**: `IN` (India)
+- **Default Curriculum**: `CBSE` (Central Board of Secondary Education)
+- **Default Currency**: `INR` (Indian Rupee)
+- **Grade Levels**: 1-12 (aligned with Indian education system)
+
+### Supported Locales
+- **India (IN)**: CBSE curriculum, grades 1-12, INR currency
+- **United States (US)**: Common Core curriculum, grades 1-12, USD currency
+
 ## Core Entities Overview
 
 ### Standards
 Input units that define what content should be generated.
 - **Purpose**: Educational standards or requirements that drive content generation
-- **Key Fields**: code (unique identifier), description
+- **Key Fields**: 
+  - `locale` (IN/US, default: IN)
+  - `curriculum_board` (CBSE/COMMON_CORE, default: CBSE)
+  - `grade_level` (1-12)
+  - `grade_range` (optional, e.g., "6-8")
+  - `code` (unique per locale+curriculum)
+  - `description`
 - **Usage**: Referenced by generation jobs to determine what type of content to create
+- **India Examples**: "CBSE.MATH.6.1", "CBSE.SCI.7.2"
 
 ### Products
 Individual pieces of generated educational content.
 - **Purpose**: The actual output items (worksheets, passages, quizzes, etc.)
-- **Key Fields**: standard_id (what standard it fulfills), type, status
+- **Key Fields**: 
+  - `locale` (IN/US, default: IN)
+  - `curriculum_board` (CBSE/COMMON_CORE, default: CBSE)
+  - `grade_level` (1-12)
+  - `product_type` (WORKSHEET/PASSAGE/QUIZ/ASSESSMENT)
+  - `status` (DRAFT/GENERATED/REVIEWED/PUBLISHED)
+  - `standard_id` (references Standards)
 - **Usage**: Core deliverable that gets bundled and sent to clients
 
 ### Generation Jobs
 Automated or manual tasks that create products.
 - **Purpose**: Tracks the process of generating content from standards
-- **Key Fields**: standard_id, job_type (single/bundle), status
+- **Key Fields**: 
+  - `locale` (IN/US, default: IN)
+  - `curriculum_board` (CBSE/COMMON_CORE, default: CBSE)
+  - `grade_level` (1-12)
+  - `job_type` (SINGLE_PRODUCT/FULL_BUNDLE)
+  - `status` (PENDING/RUNNING/COMPLETED/FAILED)
+  - `standard_id` (references Standards)
 - **Usage**: Triggered by dashboard or n8n workflows to create products
 
-### Bundles
-Collections of 12 related products grouped together.
-- **Purpose**: Package products for delivery to clients
-- **Key Fields**: Will be implemented in future iterations
-- **Usage**: Organizational unit for product delivery
+### File Artifacts
+Physical files associated with products (JSON, ZIP, etc.).
+- **Purpose**: Store references to generated files and their metadata
+- **Key Fields**: 
+  - `locale` (IN/US, default: IN)
+  - `file_type` (RAW_JSON/FINAL_JSON/METADATA_JSON/PDF/ZIP/THUMBNAIL)
+  - `file_path` (relative path in storage)
+  - `product_id` (references Products)
+- **Usage**: Track all files created during generation process
 
 ### Upload Tasks
 Tasks assigned to VA team for manual content processing.
@@ -32,14 +69,13 @@ Tasks assigned to VA team for manual content processing.
 - **Key Fields**: product_id, status
 - **Usage**: Workflow management for human-in-the-loop processes
 
-### File Artifacts
-Physical files associated with products (JSON, ZIP, etc.).
-- **Purpose**: Store references to generated files and their metadata
-- **Key Fields**: product_id, file_type, file_path
-- **Usage**: Track all files created during generation process
+### Validation Rules
+- **Locale-Curriculum Consistency**: 
+  - India (IN) → must use CBSE
+  - US → must use Common Core
+- **Grade Level Range**: 1-12 for all locales
+- **Unique Constraints**: Standards must be unique per locale+curriculum+code
 
-### Users (Future)
-Basic user management for system access.
-- **Purpose**: Authentication and authorization (planned for later phases)
-- **Key Fields**: TBD - basic user info
-- **Usage**: System access control (not implemented in MVP)
+### Future Entities
+- **Bundles**: Collections of 12 related products grouped together
+- **Users**: Basic user management for system access
