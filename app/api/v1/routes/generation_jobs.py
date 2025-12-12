@@ -1,42 +1,75 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 from app.db.session import get_db
-from app.models.generation_job import GenerationJob
+from app.repositories.generation_jobs import GenerationJobRepository
 from app.schemas.generation_job import GenerationJobRead, GenerationJobCreate
-from app.core.enums import JobStatus, JobType
+from app.core.enums import JobStatus, JobType, Locale, CurriculumBoard
+from app.core.responses import success
+from app.utils.pagination import PaginationParams, paginate_query
+from app.utils.logger import logger
 
 router = APIRouter()
 
-@router.post("/", response_model=GenerationJobRead)
+@router.post("/")
 async def create_generation_job(job: GenerationJobCreate, db: Session = Depends(get_db)):
     """Create new generation job"""
-    job_data = job.model_dump()
-    job_data['status'] = JobStatus.PENDING
-    db_job = GenerationJob(**job_data)
-    db.add(db_job)
-    db.commit()
-    db.refresh(db_job)
-    return db_job
+    try:
+        repo = GenerationJobRepository(db)
+        db_job = repo.create(job)
+        logger.info(f"Created generation job: {db_job.job_type} for standard {db_job.standard_id} (ID: {db_job.id})")
+        return success("Generation job created successfully", GenerationJobRead.model_validate(db_job))
+    except Exception as e:
+        logger.error(f"Error creating generation job: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=List[GenerationJobRead])
+@router.get("/")
 async def list_generation_jobs(
     status: Optional[JobStatus] = Query(None),
     job_type: Optional[JobType] = Query(None),
+    curriculum_board: Optional[CurriculumBoard] = Query(None),
+    grade_level: Optional[int] = Query(None),
+    locale: Optional[Locale] = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
-    """List all generation jobs with optional filtering"""
-    query = db.query(GenerationJob)
-    if status:
-        query = query.filter(GenerationJob.status == status)
-    if job_type:
-        query = query.filter(GenerationJob.job_type == job_type)
-    return query.all()
+    """List all generation jobs with optional filtering and pagination"""
+    try:
+        repo = GenerationJobRepository(db)
+        query = repo.get_all(status, curriculum_board, grade_level, locale, job_type)
+        
+        pagination_params = PaginationParams(limit=limit, offset=offset)
+        paginated_result = paginate_query(query, pagination_params)
+        
+        jobs_data = [GenerationJobRead.model_validate(job) for job in paginated_result.items]
+        
+        return success("Generation jobs retrieved successfully", {
+            "jobs": jobs_data,
+            "pagination": {
+                "total": paginated_result.total,
+                "limit": paginated_result.limit,
+                "offset": paginated_result.offset,
+                "has_next": paginated_result.has_next
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error listing generation jobs: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/{job_id}", response_model=GenerationJobRead)
+@router.get("/{job_id}")
 async def get_generation_job(job_id: int, db: Session = Depends(get_db)):
     """Get specific job details and progress"""
-    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
-    if not job:
-        raise HTTPException(status_code=404, detail="Generation job not found")
-    return job
+    try:
+        repo = GenerationJobRepository(db)
+        job = repo.get_by_id(job_id)
+        
+        if not job:
+            raise HTTPException(status_code=404, detail="Generation job not found")
+            
+        return success("Generation job retrieved successfully", GenerationJobRead.model_validate(job))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting generation job {job_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -1,4 +1,18 @@
-# RBB Engine - MVP API Endpoints (India-First)
+# RBB Engine - Enhanced API Endpoints (Day 4)
+
+## Response Format
+
+All endpoints return standardized responses:
+
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": {
+    // Response data here
+  }
+}
+```
 
 ## Standards Management
 
@@ -15,16 +29,66 @@
   "description": "Knowing Our Numbers - Place value and comparison"
 }
 ```
-- **Response**: `{id, locale, curriculum_board, grade_level, code, description, created_at}`
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Standard created successfully",
+  "data": {
+    "id": 1,
+    "locale": "IN",
+    "curriculum_board": "CBSE",
+    "grade_level": 6,
+    "code": "CBSE.MATH.6.1",
+    "description": "Knowing Our Numbers - Place value and comparison",
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
 
 ### `GET /api/v1/standards`
-- **Description**: List all available standards
-- **Query Params**: `locale`, `curriculum_board`, `grade_level`
-- **Response**: `[{id, locale, curriculum_board, grade_level, code, description, created_at}]`
+- **Description**: List all available standards with filtering and pagination
+- **Query Params**: 
+  - `curriculum_board` (CBSE, COMMON_CORE)
+  - `grade_level` (1-12)
+  - `locale` (IN, US)
+  - `limit` (1-100, default: 50)
+  - `offset` (default: 0)
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Standards retrieved successfully",
+  "data": {
+    "standards": [...],
+    "pagination": {
+      "total": 150,
+      "limit": 50,
+      "offset": 0,
+      "has_next": true
+    }
+  }
+}
+```
 
 ### `GET /api/v1/standards/{id}`
 - **Description**: Get specific standard details
-- **Response**: `{id, locale, curriculum_board, grade_level, code, description, created_at}`
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Standard retrieved successfully",
+  "data": {
+    "id": 1,
+    "locale": "IN",
+    "curriculum_board": "CBSE",
+    "grade_level": 6,
+    "code": "CBSE.MATH.6.1",
+    "description": "Knowing Our Numbers - Place value and comparison",
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
 
 ## Generation Jobs
 
@@ -40,16 +104,70 @@
   "job_type": "SINGLE_PRODUCT"
 }
 ```
-- **Response**: `{id, standard_id, locale, curriculum_board, grade_level, job_type, status, created_at}`
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Generation job created successfully",
+  "data": {
+    "id": 1,
+    "standard_id": 1,
+    "locale": "IN",
+    "curriculum_board": "CBSE",
+    "grade_level": 6,
+    "job_type": "SINGLE_PRODUCT",
+    "status": "PENDING",
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
 
 ### `GET /api/v1/generation-jobs`
-- **Description**: List all generation jobs
-- **Query Params**: `status`, `job_type`, `locale`, `curriculum_board`, `grade_level`
-- **Response**: `[{id, standard_id, locale, curriculum_board, grade_level, job_type, status, created_at}]`
+- **Description**: List all generation jobs with filtering and pagination
+- **Query Params**: 
+  - `status` (PENDING, RUNNING, COMPLETED, FAILED)
+  - `job_type` (SINGLE_PRODUCT, FULL_BUNDLE)
+  - `curriculum_board` (CBSE, COMMON_CORE)
+  - `grade_level` (1-12)
+  - `locale` (IN, US)
+  - `limit` (1-100, default: 50)
+  - `offset` (default: 0)
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Generation jobs retrieved successfully",
+  "data": {
+    "jobs": [...],
+    "pagination": {
+      "total": 25,
+      "limit": 50,
+      "offset": 0,
+      "has_next": false
+    }
+  }
+}
+```
 
 ### `GET /api/v1/generation-jobs/{id}`
 - **Description**: Get specific job details and progress
-- **Response**: `{id, standard_id, locale, curriculum_board, grade_level, job_type, status, created_at}`
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Generation job retrieved successfully",
+  "data": {
+    "id": 1,
+    "standard_id": 1,
+    "locale": "IN",
+    "curriculum_board": "CBSE",
+    "grade_level": 6,
+    "job_type": "SINGLE_PRODUCT",
+    "status": "PENDING",
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
 
 ## Locale-Specific Examples
 

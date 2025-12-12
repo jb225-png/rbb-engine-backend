@@ -1,31 +1,73 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import Optional
 from app.db.session import get_db
-from app.models.standard import Standard
+from app.repositories.standards import StandardRepository
 from app.schemas.standard import StandardRead, StandardCreate
+from app.core.enums import Locale, CurriculumBoard
+from app.core.responses import success
+from app.utils.pagination import PaginationParams, paginate_query
+from app.utils.logger import logger
 
 router = APIRouter()
 
-@router.get("/", response_model=List[StandardRead])
-async def list_standards(db: Session = Depends(get_db)):
-    """List all available standards"""
-    standards = db.query(Standard).all()
-    return standards
+@router.post("/")
+async def create_standard(standard: StandardCreate, db: Session = Depends(get_db)):
+    """Create new educational standard"""
+    try:
+        repo = StandardRepository(db)
+        db_standard = repo.create(standard)
+        logger.info(f"Created standard: {db_standard.code} (ID: {db_standard.id})")
+        return success("Standard created successfully", StandardRead.model_validate(db_standard))
+    except Exception as e:
+        logger.error(f"Error creating standard: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{standard_id}", response_model=StandardRead)
+@router.get("/")
+async def list_standards(
+    curriculum_board: Optional[CurriculumBoard] = Query(None),
+    grade_level: Optional[int] = Query(None),
+    locale: Optional[Locale] = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)
+):
+    """List all available standards with filtering and pagination"""
+    try:
+        repo = StandardRepository(db)
+        query = repo.get_all(curriculum_board, grade_level, locale)
+        
+        pagination_params = PaginationParams(limit=limit, offset=offset)
+        paginated_result = paginate_query(query, pagination_params)
+        
+        standards_data = [StandardRead.model_validate(std) for std in paginated_result.items]
+        
+        return success("Standards retrieved successfully", {
+            "standards": standards_data,
+            "pagination": {
+                "total": paginated_result.total,
+                "limit": paginated_result.limit,
+                "offset": paginated_result.offset,
+                "has_next": paginated_result.has_next
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error listing standards: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/{standard_id}")
 async def get_standard(standard_id: int, db: Session = Depends(get_db)):
     """Get specific standard details"""
-    standard = db.query(Standard).filter(Standard.id == standard_id).first()
-    if not standard:
-        raise HTTPException(status_code=404, detail="Standard not found")
-    return standard
-
-@router.post("/", response_model=StandardRead)
-async def create_standard(standard: StandardCreate, db: Session = Depends(get_db)):
-    """Create new standard"""
-    db_standard = Standard(**standard.model_dump())
-    db.add(db_standard)
-    db.commit()
-    db.refresh(db_standard)
-    return db_standard
+    try:
+        repo = StandardRepository(db)
+        standard = repo.get_by_id(standard_id)
+        
+        if not standard:
+            raise HTTPException(status_code=404, detail="Standard not found")
+            
+        return success("Standard retrieved successfully", StandardRead.model_validate(standard))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting standard {standard_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
