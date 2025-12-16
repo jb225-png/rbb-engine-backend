@@ -33,8 +33,7 @@ class ProductStatus(str, Enum):
     """Product statuses"""
     DRAFT = "DRAFT"
     GENERATED = "GENERATED"
-    REVIEWED = "REVIEWED"
-    PUBLISHED = "PUBLISHED"
+    FAILED = "FAILED"
 
 class JobType(str, Enum):
     """Generation job types"""

@@ -33,13 +33,16 @@ Input units that define what content should be generated.
 Individual pieces of generated educational content.
 - **Purpose**: The actual output items (worksheets, passages, quizzes, etc.)
 - **Key Fields**: 
+  - `standard_id` (references Standards)
+  - `generation_job_id` (references GenerationJob, optional)
+  - `product_type` (WORKSHEET/PASSAGE/QUIZ/ASSESSMENT)
+  - `status` (DRAFT/GENERATED/FAILED)
   - `locale` (IN/US, default: IN)
   - `curriculum_board` (CBSE/COMMON_CORE, default: CBSE)
   - `grade_level` (1-12)
-  - `product_type` (WORKSHEET/PASSAGE/QUIZ/ASSESSMENT)
-  - `status` (DRAFT/GENERATED/REVIEWED/PUBLISHED)
-  - `standard_id` (references Standards)
 - **Usage**: Core deliverable that gets bundled and sent to clients
+- **Lifecycle**: DRAFT → GENERATED (success) or FAILED (error)
+- **Relationships**: Linked to Standards (required) and GenerationJobs (optional)
 
 ### Generation Jobs
 Automated or manual tasks that create products.
