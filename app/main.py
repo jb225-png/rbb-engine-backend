@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
-from app.api.v1.routes import health, standards, products, generation_jobs, upload_tasks, dashboard
+from app.api.v1.routes import health, standards, products, generation_jobs, upload_tasks, dashboard, webhooks
 from app.utils.storage import storage_manager
 from app.utils.logger import logger
 
@@ -38,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(generation_jobs.router, prefix="/api/v1/generation-jobs", tags=["generation-jobs"])
     app.include_router(upload_tasks.router, prefix="/api/v1/upload-tasks", tags=["upload-tasks"])
     app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
+    app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["webhooks"])
     
     return app
 

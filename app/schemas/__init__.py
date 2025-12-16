@@ -4,6 +4,7 @@ from app.schemas.standard import StandardBase, StandardCreate, StandardRead
 from app.schemas.generation_job import GenerationJobBase, GenerationJobCreate, GenerationJobRead
 from app.schemas.upload_task import UploadTaskBase, UploadTaskCreate, UploadTaskRead, UploadTaskUpdate
 from app.schemas.file_artifact import FileArtifactBase, FileArtifactCreate, FileArtifactRead
+from app.schemas.workflow import GenerationRequestPayload
 
 __all__ = [
     "ProductBase", "ProductCreate", "ProductRead",
@@ -11,5 +12,6 @@ __all__ = [
     "StandardBase", "StandardCreate", "StandardRead",
     "GenerationJobBase", "GenerationJobCreate", "GenerationJobRead",
     "UploadTaskBase", "UploadTaskCreate", "UploadTaskRead", "UploadTaskUpdate",
-    "FileArtifactBase", "FileArtifactCreate", "FileArtifactRead"
+    "FileArtifactBase", "FileArtifactCreate", "FileArtifactRead",
+    "GenerationRequestPayload"
 ]

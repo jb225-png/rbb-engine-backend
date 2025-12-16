@@ -204,6 +204,34 @@ All endpoints return standardized responses:
 }
 ```
 
+## Webhooks (n8n Integration)
+
+### `POST /api/v1/webhooks/generation-request`
+- **Description**: Webhook endpoint for n8n workflow requests
+- **Request**: 
+```json
+{
+  "standard_code": "CBSE.MATH.6.1",
+  "curriculum_board": "CBSE",
+  "grade_level": "6",
+  "products": ["worksheet", "passage", "quiz"],
+  "source": "n8n"
+}
+```
+- **Response**: 
+```json
+{
+  "success": true,
+  "message": "Generation request received",
+  "data": {
+    "request_id": "uuid-string",
+    "status": "accepted"
+  }
+}
+```
+- **Purpose**: Accept workflow payloads and create generation jobs
+- **Logging**: Logs source, workflow name, and request ID for tracking
+
 ## Validation Rules
 - **Locale-Curriculum Consistency**: India (IN) must use CBSE, US must use Common Core
 - **Grade Level Range**: 1-12 for all locales

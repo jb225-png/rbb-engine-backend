@@ -82,3 +82,13 @@ Tasks assigned to VA team for manual content processing.
 ### Future Entities
 - **Bundles**: Collections of 12 related products grouped together
 - **Users**: Basic user management for system access
+
+## Workflow Integration
+
+### n8n Webhook Interface
+Dedicated endpoint for workflow automation.
+- **Purpose**: Accept generation requests from n8n workflows
+- **Endpoint**: `POST /api/v1/webhooks/generation-request`
+- **Payload**: Standard code, curriculum board, grade level, products list
+- **Logging**: Request ID, source tracking, workflow identification
+- **Integration**: Wraps existing generation job creation logic
