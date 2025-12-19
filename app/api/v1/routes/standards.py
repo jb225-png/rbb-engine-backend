@@ -65,9 +65,28 @@ async def get_standard(standard_id: int, db: Session = Depends(get_db)):
         if not standard:
             raise HTTPException(status_code=404, detail="Standard not found")
             
-        return success("Standard retrieved successfully", StandardRead.model_validate(standard))
-    except HTTPException:
-        raise
+@router.get("/lookup")
+async def lookup_standards(
+    code: Optional[str] = Query(None, description="Search by standard code"),
+    grade_level: Optional[int] = Query(None, ge=1, le=12),
+    curriculum_board: Optional[CurriculumBoard] = Query(None),
+    limit: int = Query(20, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    """Lightweight standards lookup for Quick Generate flow"""
+    try:
+        repo = StandardRepository(db)
+        query = repo.get_all(curriculum_board, grade_level, None)
+        
+        if code:
+            query = query.filter(repo.model.code.ilike(f"%{code}%"))
+        
+        standards = query.limit(limit).all()
+        
+        return success("Standards found", {
+            "standards": [StandardRead.model_validate(std) for std in standards],
+            "count": len(standards)
+        })
     except Exception as e:
-        logger.error(f"Error getting standard {standard_id}: {e}")
+        logger.error(f"Error in standards lookup: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

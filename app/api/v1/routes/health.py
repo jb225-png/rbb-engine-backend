@@ -1,9 +1,13 @@
 from fastapi import APIRouter
-from app.core.responses import success
+from app.core.config import settings
 
 router = APIRouter()
 
 @router.get("/health")
 def health_check():
-    """Health check endpoint"""
-    return success("Service is healthy", {"status": "ok", "version": "1.0.0"})
+    """Enhanced health check endpoint with service info"""
+    return {
+        "status": "ok",
+        "service": "rbb-backend",
+        "env": settings.environment
+    }

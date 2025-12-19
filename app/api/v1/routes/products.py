@@ -69,9 +69,43 @@ async def get_product(product_id: int, db: Session = Depends(get_db)):
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
             
-        return success("Product retrieved successfully", ProductRead.model_validate(product))
+@router.patch("/{product_id}/status")
+async def update_product_status(
+    product_id: int,
+    status: ProductStatus,
+    db: Session = Depends(get_db)
+):
+    """Update product status with basic validation"""
+    try:
+        repo = ProductRepository(db)
+        product = repo.get_by_id(product_id)
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Basic status transition validation
+        valid_transitions = {
+            ProductStatus.DRAFT: [ProductStatus.GENERATED, ProductStatus.FAILED],
+            ProductStatus.GENERATED: [ProductStatus.FAILED],
+            ProductStatus.FAILED: [ProductStatus.DRAFT]
+        }
+        
+        if status not in valid_transitions.get(product.status, []):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid status transition from {product.status} to {status}"
+            )
+        
+        updated_product = repo.update_status(product_id, status)
+        logger.info(f"Updated product {product_id} status to {status}")
+        
+        return success("Product status updated", {
+            "id": product_id, 
+            "status": status,
+            "product": ProductRead.model_validate(updated_product)
+        })
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting product {product_id}: {e}")
+        logger.error(f"Error updating product {product_id} status: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

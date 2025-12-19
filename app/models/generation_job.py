@@ -14,6 +14,9 @@ class GenerationJob(Base):
     grade_level = Column(Integer, nullable=False, index=True)
     job_type = Column(Enum(JobType), nullable=False, index=True)
     status = Column(Enum(JobStatus), default=JobStatus.PENDING, index=True)
+    total_products = Column(Integer, default=0)  # Total products to generate
+    completed_products = Column(Integer, default=0)  # Successfully completed
+    failed_products = Column(Integer, default=0)  # Failed products
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
