@@ -106,14 +106,18 @@ API documentation: http://localhost:8000/docs
 ## Available Endpoints
 
 ### Core Endpoints
-- `GET /api/health` - Health check endpoint
-- `GET /api/v1/standards` - List standards
-- `GET /api/v1/products` - List products
-- `POST /api/v1/generation-jobs` - Create generation job
-- `GET /api/v1/upload-tasks` - List upload tasks
+- `GET /api/health` - Health check with service info
+- `POST /api/generate-product` - Generate product (stable, transaction-safe)
+- `GET /api/v1/standards/lookup` - Standards search for Quick Generate
+- `GET /api/v1/products` - List products with filtering/pagination
+- `PATCH /api/v1/products/{id}/status` - Update product status (with job tracking)
+- `POST /api/v1/upload-tasks` - Create upload tasks
+- `PATCH /api/v1/upload-tasks/{id}` - Update task status (with validation)
 - `GET /api/v1/dashboard/stats` - Dashboard statistics
+- `POST /api/v1/webhooks/generation-request` - n8n webhook endpoint
 
 See `docs/endpoints_mvp.md` for complete endpoint documentation.
+See `docs/day3_stabilization.md` for Day 3 stability improvements.
 
 ## Documentation
 
@@ -143,8 +147,19 @@ Core entities implemented:
 
 1. **Day 1**: Foundation setup ✅
 2. **Day 2**: Core entities and API scaffolding ✅
-3. **Day 3+**: Business logic implementation
-4. **Future**: AI integration, n8n workflows, authentication
+3. **Milestone 2 Day 1**: Product lifecycle APIs, storage utilities ✅
+4. **Milestone 2 Day 2**: Generation jobs, upload tasks ✅
+5. **Milestone 2 Day 3**: API stabilization, validation, transactions ✅
+6. **Future**: AI integration, n8n workflows, background processing
+
+## API Stability (Day 3)
+
+- **Transaction Safety**: Atomic job + product creation
+- **Validation**: Standardized input validation and error handling
+- **Status Tracking**: Automatic job status updates from product changes
+- **Upload Lifecycle**: Enforced status transitions with validation
+- **Error Handling**: Consistent HTTP codes and error messages
+- **Storage**: Automatic stub file creation with error resilience
 
 ## Project Structure Notes
 

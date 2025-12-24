@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
 from app.db.session import get_db
 from app.schemas.upload_task import UploadTaskRead, UploadTaskCreate, UploadTaskUpdate
 from app.models.upload_task import UploadTask
 from app.core.enums import UploadTaskStatus
-from app.core.responses import success
+from app.core.responses import success, error
 from app.utils.logger import logger
 
 router = APIRouter()
@@ -15,18 +16,31 @@ async def create_upload_task(
     task: UploadTaskCreate,
     db: Session = Depends(get_db)
 ):
-    """Create new upload task"""
-    db_task = UploadTask(
-        product_id=task.product_id,
-        status=task.status or UploadTaskStatus.PENDING,
-        assigned_to=task.assigned_to
-    )
-    db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
-    
-    logger.info(f"Created upload task {db_task.id} for product {task.product_id}")
-    return db_task
+    """Create new upload task with validation"""
+    try:
+        # Validate product exists (basic check)
+        if task.product_id <= 0:
+            raise HTTPException(status_code=400, detail="Invalid product_id")
+        
+        db_task = UploadTask(
+            product_id=task.product_id,
+            status=task.status or UploadTaskStatus.PENDING,
+            assigned_to=task.assigned_to
+        )
+        db.add(db_task)
+        db.commit()
+        db.refresh(db_task)
+        
+        logger.info(f"Created upload task {db_task.id} for product {task.product_id}")
+        return db_task
+        
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error creating upload task: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create upload task")
+    except Exception as e:
+        logger.error(f"Error creating upload task: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/")
 async def list_upload_tasks(
@@ -36,34 +50,44 @@ async def list_upload_tasks(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
-    """List upload tasks with filtering and pagination"""
-    query = db.query(UploadTask)
-    
-    if status:
-        query = query.filter(UploadTask.status == status)
-    if assigned_to:
-        query = query.filter(UploadTask.assigned_to == assigned_to)
-    
-    total = query.count()
-    tasks = query.offset(offset).limit(limit).all()
-    
-    return success("Upload tasks retrieved", {
-        "tasks": [UploadTaskRead.model_validate(task) for task in tasks],
-        "pagination": {
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "has_next": offset + limit < total
-        }
-    })
+    """List upload tasks with enhanced filtering and pagination"""
+    try:
+        query = db.query(UploadTask)
+        
+        if status:
+            query = query.filter(UploadTask.status == status)
+        if assigned_to:
+            query = query.filter(UploadTask.assigned_to == assigned_to)
+        
+        total = query.count()
+        tasks = query.order_by(UploadTask.created_at.desc()).offset(offset).limit(limit).all()
+        
+        return success("Upload tasks retrieved", {
+            "tasks": [UploadTaskRead.model_validate(task) for task in tasks],
+            "pagination": {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "has_next": offset + limit < total
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error listing upload tasks: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/{task_id}", response_model=UploadTaskRead)
 async def get_upload_task(task_id: int, db: Session = Depends(get_db)):
-    """Get specific upload task"""
-    task = db.query(UploadTask).filter(UploadTask.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Upload task not found")
-    return task
+    """Get specific upload task with proper error handling"""
+    try:
+        task = db.query(UploadTask).filter(UploadTask.id == task_id).first()
+        if not task:
+            raise HTTPException(status_code=404, detail="Upload task not found")
+        return task
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting upload task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.patch("/{task_id}")
 async def update_upload_task(
@@ -71,18 +95,43 @@ async def update_upload_task(
     task_update: UploadTaskUpdate,
     db: Session = Depends(get_db)
 ):
-    """Update upload task"""
-    task = db.query(UploadTask).filter(UploadTask.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Upload task not found")
-    
-    if task_update.status is not None:
-        task.status = task_update.status
-    if task_update.assigned_to is not None:
-        task.assigned_to = task_update.assigned_to
-    
-    db.commit()
-    db.refresh(task)
-    
-    logger.info(f"Updated upload task {task_id}")
-    return success("Upload task updated", UploadTaskRead.model_validate(task))
+    """Update upload task with status transition validation"""
+    try:
+        task = db.query(UploadTask).filter(UploadTask.id == task_id).first()
+        if not task:
+            raise HTTPException(status_code=404, detail="Upload task not found")
+        
+        # Validate status transitions if status is being updated
+        if task_update.status is not None:
+            valid_transitions = {
+                UploadTaskStatus.PENDING: [UploadTaskStatus.IN_PROGRESS],
+                UploadTaskStatus.IN_PROGRESS: [UploadTaskStatus.COMPLETED, UploadTaskStatus.PENDING],
+                UploadTaskStatus.COMPLETED: []  # Terminal state
+            }
+            
+            if task_update.status not in valid_transitions.get(task.status, []):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid status transition from {task.status.value} to {task_update.status.value}"
+                )
+            
+            task.status = task_update.status
+        
+        if task_update.assigned_to is not None:
+            task.assigned_to = task_update.assigned_to
+        
+        db.commit()
+        db.refresh(task)
+        
+        logger.info(f"Updated upload task {task_id}: status={task.status}, assigned_to={task.assigned_to}")
+        return success("Upload task updated", UploadTaskRead.model_validate(task))
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error updating upload task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update upload task")
+    except Exception as e:
+        logger.error(f"Error updating upload task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")

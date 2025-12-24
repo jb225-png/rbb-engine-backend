@@ -75,7 +75,7 @@ async def update_product_status(
     status: ProductStatus,
     db: Session = Depends(get_db)
 ):
-    """Update product status with basic validation"""
+    """Update product status with validation and job status tracking"""
     try:
         repo = ProductRepository(db)
         product = repo.get_by_id(product_id)
@@ -83,7 +83,7 @@ async def update_product_status(
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
         
-        # Basic status transition validation
+        # Validate status transitions
         valid_transitions = {
             ProductStatus.DRAFT: [ProductStatus.GENERATED, ProductStatus.FAILED],
             ProductStatus.GENERATED: [ProductStatus.FAILED],
@@ -93,15 +93,23 @@ async def update_product_status(
         if status not in valid_transitions.get(product.status, []):
             raise HTTPException(
                 status_code=400, 
-                detail=f"Invalid status transition from {product.status} to {status}"
+                detail=f"Invalid status transition from {product.status.value} to {status.value}"
             )
         
+        # Update product status
         updated_product = repo.update_status(product_id, status)
-        logger.info(f"Updated product {product_id} status to {status}")
+        
+        # Update associated generation job status
+        if updated_product.generation_job_id:
+            from app.services.job_status import update_job_status
+            update_job_status(db, updated_product.generation_job_id)
+        
+        logger.info(f"Updated product {product_id} status from {product.status} to {status}")
         
         return success("Product status updated", {
             "id": product_id, 
-            "status": status,
+            "status": status.value,
+            "previous_status": product.status.value,
             "product": ProductRead.model_validate(updated_product)
         })
     except HTTPException:
