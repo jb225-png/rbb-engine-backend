@@ -40,6 +40,12 @@ class JobType(str, Enum):
     SINGLE_PRODUCT = "SINGLE_PRODUCT"
     FULL_BUNDLE = "FULL_BUNDLE"
 
+class UploadTaskStatus(str, Enum):
+    """Upload task statuses"""
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+
 class FileType(str, Enum):
     """File artifact types"""
     RAW_JSON = "RAW_JSON"

@@ -16,11 +16,13 @@ async def create_upload_task(
     task: UploadTaskCreate,
     db: Session = Depends(get_db)
 ):
-    """Create new upload task with validation"""
+    """Create new upload task with product validation"""
     try:
-        # Validate product exists (basic check)
-        if task.product_id <= 0:
-            raise HTTPException(status_code=400, detail="Invalid product_id")
+        # Validate product exists
+        from app.models.product import Product
+        product = db.query(Product).filter(Product.id == task.product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Product {task.product_id} not found")
         
         db_task = UploadTask(
             product_id=task.product_id,
@@ -31,9 +33,11 @@ async def create_upload_task(
         db.commit()
         db.refresh(db_task)
         
-        logger.info(f"Created upload task {db_task.id} for product {task.product_id}")
+        logger.info(f"Created upload task {db_task.id} for product {task.product_id} (type: {product.product_type.value})")
         return db_task
         
+    except HTTPException:
+        raise
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Database error creating upload task: {e}")
@@ -46,21 +50,36 @@ async def create_upload_task(
 async def list_upload_tasks(
     status: Optional[UploadTaskStatus] = Query(None),
     assigned_to: Optional[str] = Query(None),
+    product_id: Optional[int] = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
-    """List upload tasks with enhanced filtering and pagination"""
+    """List upload tasks with enhanced filtering and product context"""
     try:
-        query = db.query(UploadTask)
+        from app.models.product import Product
+        
+        # Join with Product for better context
+        query = db.query(UploadTask).join(Product, UploadTask.product_id == Product.id)
         
         if status:
             query = query.filter(UploadTask.status == status)
         if assigned_to:
             query = query.filter(UploadTask.assigned_to == assigned_to)
+        if product_id:
+            query = query.filter(UploadTask.product_id == product_id)
         
         total = query.count()
         tasks = query.order_by(UploadTask.created_at.desc()).offset(offset).limit(limit).all()
+        
+        # Log filtering info
+        filters_applied = []
+        if status: filters_applied.append(f"status={status.value}")
+        if assigned_to: filters_applied.append(f"assigned_to={assigned_to}")
+        if product_id: filters_applied.append(f"product_id={product_id}")
+        
+        filter_str = ", ".join(filters_applied) if filters_applied else "no filters"
+        logger.info(f"Listed {len(tasks)} upload tasks (total: {total}) with {filter_str}")
         
         return success("Upload tasks retrieved", {
             "tasks": [UploadTaskRead.model_validate(task) for task in tasks],

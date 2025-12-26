@@ -7,6 +7,7 @@ from app.core.enums import Locale, CurriculumBoard, ProductType, ProductStatus
 class ProductRepository:
     def __init__(self, db: Session):
         self.db = db
+        self.model = Product
 
     def create(self, product_data: ProductCreate) -> Product:
         """Create new product"""
@@ -55,3 +56,12 @@ class ProductRepository:
         return self.db.query(Product).filter(
             Product.generation_job_id == generation_job_id
         ).order_by(Product.created_at.desc()).all()
+    
+    def update_status(self, product_id: int, status: ProductStatus) -> Product:
+        """Update product status"""
+        product = self.get_by_id(product_id)
+        if product:
+            product.status = status
+            self.db.commit()
+            self.db.refresh(product)
+        return product

@@ -36,15 +36,28 @@ async def list_products(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)
 ):
-    """List all products with filtering and pagination"""
+    """List all products with filtering and pagination (newest first)"""
     try:
         repo = ProductRepository(db)
         query = repo.get_all(status, product_type, generation_job_id, standard_id, curriculum_board, grade_level, locale)
+        
+        # Ensure consistent ordering (newest first)
+        query = query.order_by(repo.model.created_at.desc())
         
         pagination_params = PaginationParams(limit=limit, offset=offset)
         paginated_result = paginate_query(query, pagination_params)
         
         products_data = [ProductRead.model_validate(product) for product in paginated_result.items]
+        
+        # Log filtering info
+        filters_applied = []
+        if status: filters_applied.append(f"status={status.value}")
+        if product_type: filters_applied.append(f"type={product_type.value}")
+        if generation_job_id: filters_applied.append(f"job_id={generation_job_id}")
+        if standard_id: filters_applied.append(f"standard_id={standard_id}")
+        
+        filter_str = ", ".join(filters_applied) if filters_applied else "no filters"
+        logger.info(f"Listed {len(products_data)} products (total: {paginated_result.total}) with {filter_str}")
         
         return success("Products retrieved successfully", {
             "products": products_data,
@@ -69,6 +82,14 @@ async def get_product(product_id: int, db: Session = Depends(get_db)):
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
             
+        logger.info(f"Retrieved product {product_id}")
+        return success("Product retrieved successfully", ProductRead.model_validate(product))
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting product {product_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 @router.patch("/{product_id}/status")
 async def update_product_status(
     product_id: int,

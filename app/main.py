@@ -35,6 +35,7 @@ def create_app() -> FastAPI:
     # Register routers
     app.include_router(health.router, prefix="/api", tags=["health"])
     app.include_router(generate.router, prefix="/api", tags=["generate"])
+    app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])  # Add non-versioned dashboard
     app.include_router(standards.router, prefix="/api/v1/standards", tags=["standards"])
     app.include_router(products.router, prefix="/api/v1/products", tags=["products"])
     app.include_router(generation_jobs.router, prefix="/api/v1/generation-jobs", tags=["generation-jobs"])
