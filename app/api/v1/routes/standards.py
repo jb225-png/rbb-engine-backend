@@ -65,6 +65,14 @@ async def get_standard(standard_id: int, db: Session = Depends(get_db)):
         if not standard:
             raise HTTPException(status_code=404, detail="Standard not found")
             
+        logger.info(f"Retrieved standard {standard_id}")
+        return success("Standard retrieved successfully", StandardRead.model_validate(standard))
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting standard {standard_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 @router.get("/lookup")
 async def lookup_standards(
     code: Optional[str] = Query(None, description="Search by standard code"),

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.core.config import settings
 from app.db.session import get_db
 from app.utils.logger import logger
@@ -11,7 +12,7 @@ def health_check(db: Session = Depends(get_db)):
     """Enhanced health check endpoint with service info and DB connectivity"""
     try:
         # Test database connectivity
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db_status = "connected"
     except Exception as e:
         logger.error(f"Database health check failed: {e}")

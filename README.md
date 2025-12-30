@@ -106,18 +106,23 @@ API documentation: http://localhost:8000/docs
 ## Available Endpoints
 
 ### Core Endpoints
-- `GET /api/health` - Health check with service info
-- `POST /api/generate-product` - Generate product (stable, transaction-safe)
+- `GET /api/health` - Health check with database connectivity
+- `POST /api/generate-product` - Generate product (transaction-safe)
+- `GET /api/products` - List products with filtering/pagination
+- `GET /api/products/{id}` - Get specific product
+- `PATCH /api/products/{id}/status` - Update product status
+- `GET /api/dashboard/stats` - Dashboard statistics
+- `GET /api/dashboard/summary` - Dashboard summary
+
+### Versioned API (v1)
 - `GET /api/v1/standards/lookup` - Standards search for Quick Generate
-- `GET /api/v1/products` - List products with filtering/pagination
-- `PATCH /api/v1/products/{id}/status` - Update product status (with job tracking)
+- `GET /api/v1/standards` - List standards with filtering
+- `GET /api/v1/generation-jobs` - List generation jobs
 - `POST /api/v1/upload-tasks` - Create upload tasks
-- `PATCH /api/v1/upload-tasks/{id}` - Update task status (with validation)
-- `GET /api/v1/dashboard/stats` - Dashboard statistics
+- `PATCH /api/v1/upload-tasks/{id}` - Update task status
 - `POST /api/v1/webhooks/generation-request` - n8n webhook endpoint
 
-See `docs/endpoints_mvp.md` for complete endpoint documentation.
-See `docs/day3_stabilization.md` for Day 3 stability improvements.
+See `API_OVERVIEW.md` for complete endpoint documentation with data flows.
 
 ## Documentation
 

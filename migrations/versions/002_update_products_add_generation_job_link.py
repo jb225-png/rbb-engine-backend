@@ -15,18 +15,25 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
+    # Add generation_job_id column to products table first
+    op.add_column('products', sa.Column('generation_job_id', sa.Integer(), nullable=True))
+    
     # Update product status enum to match Day 5 requirements
+    # First, remove the default value to avoid casting issues
+    op.alter_column('products', 'status', server_default=None)
+    
+    # Rename old enum
     op.execute("ALTER TYPE productstatus RENAME TO productstatus_old")
     
     # Create new enum with updated values
     new_product_status_enum = sa.Enum('DRAFT', 'GENERATED', 'FAILED', name='productstatus')
     new_product_status_enum.create(op.get_bind())
     
-    # Add generation_job_id column to products table
-    op.add_column('products', sa.Column('generation_job_id', sa.Integer(), nullable=True))
+    # Update status column to use new enum with explicit casting
+    op.execute("ALTER TABLE products ALTER COLUMN status TYPE productstatus USING CASE WHEN status::text = 'REVIEWED' THEN 'GENERATED'::productstatus WHEN status::text = 'PUBLISHED' THEN 'GENERATED'::productstatus ELSE status::text::productstatus END")
     
-    # Update status column to use new enum
-    op.execute("ALTER TABLE products ALTER COLUMN status TYPE productstatus USING status::text::productstatus")
+    # Restore default value
+    op.alter_column('products', 'status', server_default=sa.text("'DRAFT'::productstatus"))
     
     # Drop old enum
     op.execute("DROP TYPE productstatus_old")
