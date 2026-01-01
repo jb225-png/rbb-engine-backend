@@ -155,7 +155,9 @@ Core entities implemented:
 3. **Milestone 2 Day 1**: Product lifecycle APIs, storage utilities ✅
 4. **Milestone 2 Day 2**: Generation jobs, upload tasks ✅
 5. **Milestone 2 Day 3**: API stabilization, validation, transactions ✅
-6. **Future**: AI integration, n8n workflows, background processing
+6. **Milestone 3 Day 1**: Generation job lifecycle hardening ✅
+7. **Milestone 3 Day 2**: Job progress tracking and data reliability ✅
+8. **Future**: AI integration, n8n workflows, background processing
 
 ## API Stability (Day 3)
 

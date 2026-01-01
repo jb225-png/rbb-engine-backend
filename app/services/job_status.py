@@ -1,1 +1,109 @@
-from sqlalchemy.orm import Session\nfrom app.models.generation_job import GenerationJob\nfrom app.models.product import Product\nfrom app.core.enums import JobStatus, ProductStatus\nfrom app.utils.logger import logger\n\ndef update_job_status(db: Session, job_id: int) -> None:\n    \"\"\"Update generation job status based on associated products\"\"\"\n    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()\n    if not job:\n        return\n    \n    # Count products by status\n    products = db.query(Product).filter(Product.generation_job_id == job_id).all()\n    \n    total = len(products)\n    completed = sum(1 for p in products if p.status == ProductStatus.GENERATED)\n    failed = sum(1 for p in products if p.status == ProductStatus.FAILED)\n    \n    # Update job tracking fields\n    job.total_products = total\n    job.completed_products = completed\n    job.failed_products = failed\n    \n    # Update job status based on product states\n    if total == 0:\n        job.status = JobStatus.PENDING\n    elif failed > 0 and completed == 0:\n        job.status = JobStatus.FAILED\n    elif completed == total:\n        job.status = JobStatus.COMPLETED\n    elif completed > 0 or failed > 0:\n        job.status = JobStatus.RUNNING\n    else:\n        job.status = JobStatus.PENDING\n    \n    db.commit()\n    logger.info(f\"Updated job {job_id} status to {job.status} ({completed}/{total} completed, {failed} failed)\")
+from sqlalchemy.orm import Session
+from app.models.generation_job import GenerationJob
+from app.models.product import Product
+from app.core.enums import JobStatus, ProductStatus
+from app.utils.logger import logger
+
+def mark_job_running(db: Session, job_id: int) -> None:
+    """Mark job as running and log the transition"""
+    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
+    if not job:
+        logger.warning(f"Job {job_id} not found for status update")
+        return
+    
+    job.status = JobStatus.RUNNING
+    db.commit()
+    logger.info(f"Job {job_id} marked as RUNNING")
+
+def mark_job_completed(db: Session, job_id: int) -> None:
+    """Mark job as completed and log the transition"""
+    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
+    if not job:
+        logger.warning(f"Job {job_id} not found for status update")
+        return
+    
+    job.status = JobStatus.COMPLETED
+    db.commit()
+    logger.info(f"Job {job_id} marked as COMPLETED")
+
+def mark_job_failed(db: Session, job_id: int) -> None:
+    """Mark job as failed and log the transition"""
+    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
+    if not job:
+        logger.warning(f"Job {job_id} not found for status update")
+        return
+    
+    job.status = JobStatus.FAILED
+    db.commit()
+    logger.info(f"Job {job_id} marked as FAILED")
+
+def update_job_progress(db: Session, job_id: int, product_id: int, new_status: ProductStatus) -> None:
+    """Update job progress counters when product status changes"""
+    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
+    if not job:
+        logger.warning(f"Job {job_id} not found for progress update")
+        return
+    
+    # Count products by status
+    products = db.query(Product).filter(Product.generation_job_id == job_id).all()
+    
+    total = len(products)
+    completed = sum(1 for p in products if p.status == ProductStatus.GENERATED)
+    failed = sum(1 for p in products if p.status == ProductStatus.FAILED)
+    
+    # Update job tracking fields
+    job.total_products = total
+    job.completed_products = completed
+    job.failed_products = failed
+    
+    # Update job status based on completion
+    old_status = job.status
+    if completed + failed == total and total > 0:
+        job.status = JobStatus.COMPLETED
+        logger.info(f"Job {job_id} completed: {completed} generated, {failed} failed")
+    elif completed > 0 or failed > 0:
+        job.status = JobStatus.RUNNING
+    
+    db.commit()
+    
+    if old_status != job.status:
+        logger.info(f"Job {job_id} status changed from {old_status} to {job.status}")
+    
+    logger.info(f"Job {job_id} progress: {completed}/{total} completed, {failed} failed (product {product_id} → {new_status.value})")
+
+def update_job_status(db: Session, job_id: int) -> None:
+    """Update generation job status based on associated products"""
+    job = db.query(GenerationJob).filter(GenerationJob.id == job_id).first()
+    if not job:
+        logger.warning(f"Job {job_id} not found for status update")
+        return
+    
+    # Count products by status
+    products = db.query(Product).filter(Product.generation_job_id == job_id).all()
+    
+    total = len(products)
+    completed = sum(1 for p in products if p.status == ProductStatus.GENERATED)
+    failed = sum(1 for p in products if p.status == ProductStatus.FAILED)
+    
+    # Update job tracking fields
+    job.total_products = total
+    job.completed_products = completed
+    job.failed_products = failed
+    
+    # Update job status based on product states
+    old_status = job.status
+    if total == 0:
+        job.status = JobStatus.PENDING
+    elif completed + failed == total:
+        job.status = JobStatus.COMPLETED
+    elif completed > 0 or failed > 0:
+        job.status = JobStatus.RUNNING
+    else:
+        job.status = JobStatus.PENDING
+    
+    db.commit()
+    
+    if old_status != job.status:
+        logger.info(f"Job {job_id} status changed from {old_status} to {job.status}")
+    
+    logger.info(f"Updated job {job_id}: {completed}/{total} completed, {failed} failed")

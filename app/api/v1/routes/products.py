@@ -75,6 +75,9 @@ async def list_products(
 @router.get("/{product_id}")
 async def get_product(product_id: int, db: Session = Depends(get_db)):
     """Get specific product details"""
+    if product_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid product ID")
+        
     try:
         repo = ProductRepository(db)
         product = repo.get_by_id(product_id)
@@ -96,7 +99,10 @@ async def update_product_status(
     status: ProductStatus,
     db: Session = Depends(get_db)
 ):
-    """Update product status with validation and job status tracking"""
+    """Update product status with validation and job progress tracking"""
+    if product_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid product ID")
+        
     try:
         repo = ProductRepository(db)
         product = repo.get_by_id(product_id)
@@ -117,20 +123,22 @@ async def update_product_status(
                 detail=f"Invalid status transition from {product.status.value} to {status.value}"
             )
         
+        old_status = product.status
+        
         # Update product status
         updated_product = repo.update_status(product_id, status)
         
-        # Update associated generation job status
+        # Update associated generation job progress
         if updated_product.generation_job_id:
-            from app.services.job_status import update_job_status
-            update_job_status(db, updated_product.generation_job_id)
+            from app.services.job_status import update_job_progress
+            update_job_progress(db, updated_product.generation_job_id, product_id, status)
         
-        logger.info(f"Updated product {product_id} status from {product.status} to {status}")
+        logger.info(f"Updated product {product_id} status from {old_status.value} to {status.value}")
         
         return success("Product status updated", {
             "id": product_id, 
             "status": status.value,
-            "previous_status": product.status.value,
+            "previous_status": old_status.value,
             "product": ProductRead.model_validate(updated_product)
         })
     except HTTPException:

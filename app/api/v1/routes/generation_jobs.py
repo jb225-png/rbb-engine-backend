@@ -57,16 +57,64 @@ async def list_generation_jobs(
         logger.error(f"Error listing generation jobs: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/{job_id}")
-async def get_generation_job(job_id: int, db: Session = Depends(get_db)):
-    """Get specific job details and progress"""
+@router.get("/{job_id}/summary")
+async def get_generation_job_summary(job_id: int, db: Session = Depends(get_db)):
+    """Get lightweight job summary for frontend status panels"""
+    if job_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid job ID")
+        
     try:
         repo = GenerationJobRepository(db)
         job = repo.get_by_id(job_id)
         
         if not job:
             raise HTTPException(status_code=404, detail="Generation job not found")
-            
+        
+        # Update job counts from products before returning
+        from app.services.job_status import update_job_status
+        update_job_status(db, job_id)
+        
+        # Refresh job to get updated counts
+        db.refresh(job)
+        
+        summary = {
+            "job_id": job.id,
+            "status": job.status,
+            "total_products": job.total_products,
+            "completed_products": job.completed_products,
+            "failed_products": job.failed_products,
+            "created_at": job.created_at
+        }
+        
+        logger.info(f"Retrieved job {job_id} summary: {job.completed_products}/{job.total_products} completed")
+        return success("Job summary retrieved successfully", summary)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting job {job_id} summary: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/{job_id}")
+async def get_generation_job(job_id: int, db: Session = Depends(get_db)):
+    """Get specific job details and progress"""
+    if job_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid job ID")
+        
+    try:
+        repo = GenerationJobRepository(db)
+        job = repo.get_by_id(job_id)
+        
+        if not job:
+            raise HTTPException(status_code=404, detail="Generation job not found")
+        
+        # Update job counts from products before returning
+        from app.services.job_status import update_job_status
+        update_job_status(db, job_id)
+        
+        # Refresh job to get updated counts
+        db.refresh(job)
+        
+        logger.info(f"Retrieved job {job_id}: {job.completed_products}/{job.total_products} completed")
         return success("Generation job retrieved successfully", GenerationJobRead.model_validate(job))
     except HTTPException:
         raise

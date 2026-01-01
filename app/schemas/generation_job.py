@@ -30,7 +30,11 @@ class GenerationJobCreate(GenerationJobBase):
 
 class GenerationJobRead(GenerationJobBase):
     id: int
+    total_products: int
+    completed_products: int
+    failed_products: int
     created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
