@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import Optional
+from pathlib import Path
+import json
 from app.db.session import get_db
 from app.repositories.products import ProductRepository
 from app.schemas.product import ProductRead, ProductCreate
@@ -8,6 +11,8 @@ from app.core.enums import Locale, CurriculumBoard, ProductType, ProductStatus
 from app.core.responses import success
 from app.utils.pagination import PaginationParams, paginate_query
 from app.utils.logger import logger
+from app.utils.storage import storage_manager
+from app.utils.pdf_generator import pdf_generator
 
 router = APIRouter()
 
@@ -93,6 +98,86 @@ async def get_product(product_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error getting product {product_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/{product_id}/content")
+async def get_product_content(product_id: int, db: Session = Depends(get_db)):
+    """Get the actual generated content for a product"""
+    if product_id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid product ID")
+        
+    try:
+        repo = ProductRepository(db)
+        product = repo.get_by_id(product_id)
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Load content from raw.json
+        product_path = storage_manager.get_product_path(product_id)
+        raw_json_path = product_path / "raw.json"
+        
+        if not raw_json_path.exists():
+            raise HTTPException(status_code=404, detail="Product content not found")
+        
+        with open(raw_json_path, 'r') as f:
+            content_data = json.load(f)
+        
+        logger.info(f"Retrieved content for product {product_id}")
+        return success("Product content retrieved successfully", content_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting content for product {product_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/{product_id}/download/pdf")
+async def download_product_pdf(product_id: int, db: Session = Depends(get_db)):
+    """Download product as PDF file"""
+    try:
+        repo = ProductRepository(db)
+        product = repo.get_by_id(product_id)
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        if product.status != ProductStatus.GENERATED:
+            raise HTTPException(status_code=400, detail="Product not ready for download")
+        
+        # Check if PDF already exists
+        product_path = storage_manager.get_product_path(product_id)
+        pdf_path = product_path / f"worksheet_{product_id}.pdf"
+        
+        # Generate PDF if it doesn't exist
+        if not pdf_path.exists():
+            # Load content from raw.json
+            raw_json_path = product_path / "raw.json"
+            if not raw_json_path.exists():
+                raise HTTPException(status_code=404, detail="Product content not found")
+            
+            with open(raw_json_path, 'r') as f:
+                content_data = json.load(f)
+            
+            # Generate PDF
+            pdf_path = pdf_generator.generate_pdf_from_content(
+                product_id, 
+                product.product_type.value, 
+                content_data
+            )
+        
+        # Return PDF file
+        filename = f"{product.product_type.value.lower()}_{product.grade_level}_{product_id}.pdf"
+        return FileResponse(
+            path=str(pdf_path),
+            filename=filename,
+            media_type="application/pdf"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading PDF for product {product_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate PDF")
 @router.patch("/{product_id}/status")
 async def update_product_status(
     product_id: int,

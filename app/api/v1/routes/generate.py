@@ -5,12 +5,19 @@ from app.db.session import get_db
 from app.schemas.generate import GenerateProductRequest, GenerateProductResponse
 from app.models.generation_job import GenerationJob
 from app.models.product import Product
+from app.models.standard import Standard
 from app.core.enums import JobType, JobStatus, ProductStatus
 from app.utils.logger import logger
 from app.utils.storage import storage_manager
 from app.utils.pdf_stub import generate_stub_pdf
 from app.utils.thumbnail_stub import generate_stub_thumbnail
 from app.utils.validation import validate_positive_integer, validate_grade_level
+from app.services.job_status import update_job_progress
+
+# AI Agents
+from app.ai.agents.generator import generator_agent
+from app.ai.agents.qc import qc_agent
+from app.ai.agents.metadata import metadata_agent
 
 router = APIRouter()
 
@@ -19,15 +26,20 @@ async def generate_product(
     request: GenerateProductRequest,
     db: Session = Depends(get_db)
 ):
-    """Generate product endpoint - creates job and product records with full validation"""
+    """Generate product endpoint with full AI agent orchestration"""
     
     # Validate input fields using standardized validators
     validate_positive_integer(request.standard_id, "standard_id")
     validate_grade_level(request.grade_level)
     
     try:
+        # Get standard information for AI generation
+        standard = db.query(Standard).filter(Standard.id == request.standard_id).first()
+        if not standard:
+            raise HTTPException(status_code=404, detail="Standard not found")
+        
         # Use transaction for atomic creation
-        with db.begin():
+        try:
             # Create generation job
             job = GenerationJob(
                 standard_id=request.standard_id,
@@ -66,19 +78,76 @@ async def generate_product(
                 # Continue - storage issues shouldn't fail the entire operation
             
             db.commit()
+        except Exception as db_error:
+            db.rollback()
+            raise db_error
+        
+        # AI Agent Orchestration (Sequential)
+        try:
+            logger.info(f"Starting AI generation for product {product.id}")
+            
+            # Step 1: Generate Content
+            content = await generator_agent.generate_content(
+                product_id=product.id,
+                product_type=request.product_type.value,
+                standard=standard.description or standard.code,
+                grade_level=request.grade_level,
+                curriculum=request.curriculum_board.value
+            )
+            
+            # Step 2: Quality Control
+            qc_result = await qc_agent.evaluate_content(
+                product_id=product.id,
+                product_type=request.product_type.value,
+                content=content,
+                standard=standard.description or standard.code,
+                grade_level=request.grade_level
+            )
+            
+            # Step 3: Generate Metadata
+            metadata = await metadata_agent.generate_metadata(
+                product_id=product.id,
+                product_type=request.product_type.value,
+                content=content,
+                standard=standard.description or standard.code,
+                grade_level=request.grade_level,
+                curriculum=request.curriculum_board.value
+            )
+            
+            # Update product status based on QC result
+            if qc_result['verdict'] == 'PASS':
+                product.status = ProductStatus.GENERATED
+                logger.info(f"Product {product.id} generated successfully (QC: {qc_result['score']}%)")
+            else:
+                product.status = ProductStatus.FAILED
+                logger.warning(f"Product {product.id} failed QC: {qc_result['verdict']} (score: {qc_result['score']}%)")
+            
+            db.commit()
+            
+            # Update job progress
+            update_job_progress(db, job.id, product.id, product.status)
+            
+        except Exception as ai_error:
+            logger.error(f"AI generation failed for product {product.id}: {ai_error}")
+            # Mark product as failed
+            product.status = ProductStatus.FAILED
+            db.commit()
+            update_job_progress(db, job.id, product.id, ProductStatus.FAILED)
             
         logger.info(
             f"Generated job {job.id} with product {product.id}: "
             f"{request.product_type.value} for standard {request.standard_id} "
-            f"(Grade {request.grade_level}, {request.curriculum_board.value})"
+            f"(Grade {request.grade_level}, {request.curriculum_board.value}) - Status: {product.status.value}"
         )
         
         return GenerateProductResponse(
             job_id=job.id,
             product_ids=[product.id],
-            message=f"Product generation job created successfully for {request.product_type.value}"
+            message=f"Product generation completed for {request.product_type.value} - Status: {product.status.value}"
         )
         
+    except HTTPException:
+        raise
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Database error in generate_product: {e}")
