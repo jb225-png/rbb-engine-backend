@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "score": 94,
+  "evaluation": {
+    "structure": {
+      "score": 96,
+      "notes": "All required template fields are present and well-organized. Slides progress logically from orientation (slide1) to reading passage (slide2) to discussion (slide3). Title, bundle_title, tagline, objectives, directions, main_theme, and slide content are all populated. Format is consistent throughout."
+    },
+    "alignment": {
+      "score": 97,
+      "notes": "Exceptionally well-aligned to RI.6.1. The passage demands explicit citation of textual evidence in every discussion question. Questions progress from recall (Q1) to evidence selection and justification (Q2) to comparative analysis (Q3) to inference with text support (Q4) to evaluative reasoning (Q5). The vocabulary term 'inference' is explicitly defined, directly scaffolding the standard. Tagline reinforces the standard's dual requirement: explicit evidence AND inference."
+    },
+    "clarity": {
+      "score": 95,
+      "notes": "Directions are clear and purposeful. Vocabulary definitions are accurate and accessible. Discussion questions are unambiguous and each explicitly prompt citation behavior. The passage itself is well-structured with clear topic sentences. Minor note: Q3 asks which cause is presented 'most convincingly' \u2014 this is slightly evaluative/subjective framing but is appropriately anchored by the 'use specific details' requirement, making it pedagogically sound."
+    },
+    "difficulty": {
+      "score": 92,
+      "notes": "Lexile level and sentence complexity are appropriate for Grade 6. The passage introduces three-factor causation (pesticides, parasites, habitat loss) which requires multi-step synthesis \u2014 appropriately challenging without being overwhelming. Vocabulary is pre-taught. Questions scaffold from lower-order (Q1) to higher-order thinking (Q4, Q5). Progressive challenge is well-implemented. The passage length (~500 words) is suitable for the grade level."
+    },
+    "inclusivity": {
+      "score": 93,
+      "notes": "Topic is universally relevant and culturally neutral. Science-focused content avoids cultural, religious, or political bias. The agricultural/environmental context is broadly accessible. No stereotyping or exclusionary language detected. Content supports diverse learners through pre-taught vocabulary. Slight consideration: the opening scenario assumes familiarity with orchards/beehives, but this is minor and contextually explained within the passage."
+    },
+    "accuracy": {
+      "score": 94,
+      "notes": "All factual claims are accurate and well-sourced in framing. USDA statistic about one-third of food supply is a commonly cited, credible figure. The description of neonicotinoids, Varroa mites, and habitat loss as CCD contributing factors accurately reflects the current scientific consensus. The multi-causal framing is pedagogically sound and scientifically honest. The characterization of neonicotinoid restrictions by 'some countries' is appropriately hedged and accurate. No misinformation detected."
+    }
+  },
+  "issues": [
+    {
+      "severity": "minor",
+      "field": "slide3_content",
+      "description": "Q3 asks students to identify which cause is presented 'most convincingly,' which introduces a slight subjective element. While anchored by the evidence requirement, consider rewording to 'Which cause does the author support with the most evidence?' for tighter alignment to RI.6.1's analytical focus over opinion."
+    },
+    {
+      "severity": "minor",
+      "field": "slide1_content",
+      "description": "The vocabulary list includes 'inference,' which is a literary/academic process term rather than a domain-specific content term. While pedagogically useful for RI.6.1, consider separating it visually or labeling it as an 'Academic Vocabulary' term to distinguish it from the science content vocabulary."
+    },
+    {
+      "severity": "minor",
+      "field": "objectives",
+      "description": "Objectives are accurate but closely paraphrase the standard language without adding instructional specificity tied to this passage's content. Consider one objective referencing the passage topic (e.g., 'Analyze how evidence supports the author's claims about the causes of Colony Collapse Disorder') for stronger instructional clarity."
+    }
+  ],
+  "summary": "This is a high-quality, standards-aligned anchor reading passage ready for immediate classroom use. The informational text is factually accurate, age-appropriate, and engagingly written. Discussion questions systematically require evidence citation at multiple cognitive levels, directly practicing RI.6.1 skills. Pre-taught vocabulary effectively scaffolds comprehension. The three identified issues are minor refinements rather than substantive problems and do not impede classroom usability."
+}
