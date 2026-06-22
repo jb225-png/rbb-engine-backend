@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "score": 92,
+  "evaluation": {
+    "structure": {
+      "score": 95,
+      "notes": "Well-organized multi-slide format with clear delineation between introduction, passage, and discussion. Includes title, bundle title, tagline, objectives, directions, vocabulary, narrative text, and discussion questions. All expected template components are present and consistently formatted."
+    },
+    "alignment": {
+      "score": 93,
+      "notes": "Strongly aligned with RL.6.10. The passage sits squarely in the grades 6-8 text complexity band with appropriate Lexile demands, layered meaning, and literary devices. Discussion questions target RL.6.1 (textual evidence), RL.6.2 (theme), RL.6.3 (character), and RL.6.4 (figurative language), providing strong cross-standard coverage anchored to the primary standard."
+    },
+    "clarity": {
+      "score": 94,
+      "notes": "Directions are clear and purposeful. Vocabulary definitions are accurate and student-friendly. Discussion questions are precisely worded with explicit scaffolding (e.g., 'Use at least two details from the text'). No ambiguous instructions detected."
+    },
+    "difficulty": {
+      "score": 90,
+      "notes": "Passage length and complexity are appropriate for Grade 6. Vocabulary, sentence structure, and thematic nuance align with the 6-8 band without being inaccessible. Discussion questions progress from textual recall to inference to thematic analysis, demonstrating good cognitive scaffolding. Question 5 (author's craft/repetition) is the most demanding and appropriately placed last."
+    },
+    "inclusivity": {
+      "score": 88,
+      "notes": "The passage features an intergenerational relationship and a coming-of-age female protagonist, which supports diverse reader identification. Setting (Maine coast, early 1990s) is regionally specific but not exclusionary. The theme of navigating change is universally relatable. Minor note: the cultural context is predominantly white/New England, which is not problematic but limits representational diversity. No culturally insensitive content detected."
+    },
+    "accuracy": {
+      "score": 94,
+      "notes": "Historical context of lighthouse automation in the early 1990s is factually accurate. Vocabulary definitions are correct and pedagogically appropriate. Literary devices (simile, repetition, mood) are accurately employed and labeled in discussion questions. The story's internal logic is consistent. No factual or pedagogical errors identified."
+    }
+  },
+  "issues": [
+    {
+      "severity": "minor",
+      "category": "INCLUSIVITY",
+      "description": "The setting and character context (coastal Maine, lighthouse tradition) reflect a predominantly white, regional American cultural background. While not problematic, adding a brief author's note or choosing a culturally broader context in future bundles would enhance representational diversity across the curriculum."
+    },
+    {
+      "severity": "minor",
+      "category": "STRUCTURE",
+      "description": "The 'objectives' field uses a combined bullet point string rather than clearly separated learning objective statements. Separating these into distinct labeled items (e.g., Objective 1, Objective 2) would improve template consistency and usability for teachers referencing specific standards."
+    },
+    {
+      "severity": "minor",
+      "category": "DIFFICULTY",
+      "description": "Discussion Question 3 asks students to interpret figurative language and explain authorial intent simultaneously, which combines two distinct analytical tasks. Splitting this into two sub-parts or providing a sentence stem scaffold would better support lower-proficiency Grade 6 readers without reducing rigor for advanced students."
+    }
+  ],
+  "summary": "This is a high-quality anchor reading passage that effectively meets the RL.6.10 standard. The original short story is well-crafted, age-appropriate, and thematically rich. The vocabulary support, discussion questions, and structural organization are all strong. Minor improvements to inclusivity, objective formatting, and one scaffolding gap in Question 3 are recommended but do not impede classroom use. Ready for deployment with optional minor revisions."
+}

@@ -1,0 +1,48 @@
+{
+  "verdict": "PASS",
+  "score": 92,
+  "evaluation": {
+    "structure": {
+      "score": 95,
+      "notes": "Well-organized across slides with clear sections: context/vocabulary, passage, and discussion questions. Consistent formatting throughout. Title, tagline, objectives, and directions all present and properly formatted."
+    },
+    "alignment": {
+      "score": 93,
+      "notes": "Strongly aligned with RL.6.10 \u2014 the passage operates within the grades 6\u20138 text complexity band with sophisticated vocabulary, layered meaning, and literary devices appropriate for the standard. Objectives explicitly reference the standard. Discussion questions address character, setting, theme, and author's craft as required."
+    },
+    "clarity": {
+      "score": 92,
+      "notes": "Directions are concise and actionable. Vocabulary definitions are accurate and student-friendly. Discussion questions are clearly worded with appropriate scaffolding (e.g., 'Use details from the passage to support your answer'). No ambiguous instructions detected."
+    },
+    "difficulty": {
+      "score": 90,
+      "notes": "Text complexity is appropriate for Grade 6 \u2014 sentence structures vary, figurative language is present but not excessive, and the emotional/thematic content is accessible without being simplistic. Questions progress from literal recall (Q1) to inferential (Q2\u2013Q3) to analytical (Q4\u2013Q5), demonstrating good cognitive scaffolding. Quantitative measures appear consistent with a 6\u20138 band Lexile estimate."
+    },
+    "inclusivity": {
+      "score": 88,
+      "notes": "Content is culturally neutral and historically grounded without bias. The protagonist is male, which is contextually appropriate to the early 1900s lighthouse-keeping setting and not exclusionary. Theme of adapting to change is universally relatable. No culturally insensitive content detected. Minor note: the narrative features only male characters across three generations, which slightly limits gender representation, though not a significant barrier to engagement."
+    },
+    "accuracy": {
+      "score": 94,
+      "notes": "All vocabulary definitions are accurate. The historical context of lighthouse automation in the early 20th century is factually plausible. Literary elements (symbol, theme, character development) are correctly identified and applied. The thematic statement is pedagogically sound and supported by textual evidence in the passage."
+    }
+  },
+  "issues": [
+    {
+      "severity": "minor",
+      "category": "INCLUSIVITY",
+      "description": "All named characters (Elias, father, grandfather) are male. While historically contextualized, consider acknowledging diverse lighthouse-keeping history in background text if a more inclusive framing is desired in future iterations."
+    },
+    {
+      "severity": "minor",
+      "category": "STRUCTURE",
+      "description": "The 'directions' field instructs students to 'discuss the questions,' but the slide3 questions are more suitable for both written and discussion response. Consider updating directions to reflect 'discuss or respond in writing' to support varied instructional formats."
+    },
+    {
+      "severity": "minor",
+      "category": "DIFFICULTY",
+      "description": "Question 3 (symbolism of the 112 steps) is a strong analytical prompt, but may benefit from a brief scaffolding phrase for lower-performing Grade 6 readers, such as 'Think about when and why the author mentions the steps.' This is optional but would improve accessibility."
+    }
+  ],
+  "summary": "This is a high-quality anchor reading passage that is well-structured, appropriately challenging, and tightly aligned to RL.6.10. The original narrative is compelling, the vocabulary support is well-calibrated, and the discussion questions demonstrate strong pedagogical design with a clear progression from recall to analysis. Three minor issues are noted but none require revision before use. The content is ready for classroom deployment."
+}
